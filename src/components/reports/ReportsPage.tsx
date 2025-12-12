@@ -60,12 +60,52 @@ export default function ReportsPage() {
     const totalProfit = totalCurrentValue - totalInvested;
     const totalProfitPercent = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
 
+    const handleExportCSV = () => {
+        // Create CSV headers
+        const headers = ['Símbolo', 'Nombre', 'Tipo', 'Cantidad Total', 'Total Invertido', 'Valor Actual', 'Beneficio', 'Beneficio %', 'Operaciones'];
+
+        // Create CSV rows from accumulated data
+        const rows = accumulatedData.map(item => {
+            const profit = item.currentValue - item.totalInvested;
+            const profitPercent = item.totalInvested > 0 ? (profit / item.totalInvested) * 100 : 0;
+
+            return [
+                item.symbol,
+                `"${item.name}"`, // Quote to handle commas in names
+                item.type,
+                item.quantity.toFixed(6),
+                item.totalInvested.toFixed(2),
+                item.currentValue.toFixed(2),
+                profit.toFixed(2),
+                profitPercent.toFixed(2) + '%',
+                item.count
+            ].join(',');
+        });
+
+        // Add totals row
+        rows.push(['TOTAL', '', '', '', totalInvested.toFixed(2), totalCurrentValue.toFixed(2), totalProfit.toFixed(2), totalProfitPercent.toFixed(2) + '%', ''].join(','));
+
+        // Combine headers and rows
+        const csvContent = [headers.join(','), ...rows].join('\n');
+
+        // Create and download the file
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for Excel UTF-8
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `informe_inversiones_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="flex-1 space-y-8 p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Informes y Análisis</h2>
                 <div className="flex items-center space-x-2">
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={handleExportCSV} disabled={accumulatedData.length === 0}>
                         <Download className="mr-2 h-4 w-4" /> Exportar CSV
                     </Button>
                 </div>
