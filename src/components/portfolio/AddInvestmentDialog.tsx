@@ -139,25 +139,29 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-4 border-t border-b py-2">
-                    <span className="text-sm font-medium">Modo:</span>
-                    <div className="flex gap-2">
-                        <Button
+                <div className="flex items-center space-x-4 border-t border-b py-3 bg-slate-50 -mx-6 px-6">
+                    <span className="text-sm font-medium text-slate-700">Modo de entrada:</span>
+                    <div className="flex gap-2 bg-white p-1 rounded-lg border">
+                        <button
                             type="button"
-                            variant={inputMode === "capital" ? "default" : "outline"}
-                            size="sm"
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${inputMode === "capital"
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "text-slate-600 hover:bg-slate-100"
+                                }`}
                             onClick={() => { setInputMode("capital"); setQuantity(""); }}
                         >
-                            Por Capital (EUR)
-                        </Button>
-                        <Button
+                            💰 Por Capital (EUR)
+                        </button>
+                        <button
                             type="button"
-                            variant={inputMode === "standard" ? "default" : "outline"}
-                            size="sm"
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${inputMode === "standard"
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "text-slate-600 hover:bg-slate-100"
+                                }`}
                             onClick={() => { setInputMode("standard"); setTotalInvested(""); }}
                         >
-                            Por Cantidad
-                        </Button>
+                            🔢 Por Cantidad
+                        </button>
                     </div>
                 </div>
 
@@ -177,22 +181,24 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
                 </div>
 
                 {/* Exchange Rate Input - Only visible if active */}
-                {isForeignCurrency && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                        <Label htmlFor="exchangeRate">Tasa de Cambio (USD/EUR)</Label>
-                        <Input
-                            id="exchangeRate"
-                            type="number"
-                            step="any"
-                            placeholder="0.85"
-                            value={exchangeRate}
-                            onChange={(e) => setExchangeRate(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            1 USD = {exchangeRate || '...'} EUR
-                        </p>
-                    </div>
-                )}
+                {
+                    isForeignCurrency && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                            <Label htmlFor="exchangeRate">Tasa de Cambio (USD/EUR)</Label>
+                            <Input
+                                id="exchangeRate"
+                                type="number"
+                                step="any"
+                                placeholder="0.85"
+                                value={exchangeRate}
+                                onChange={(e) => setExchangeRate(e.target.value)}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                1 USD = {exchangeRate || '...'} EUR
+                            </p>
+                        </div>
+                    )
+                }
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -245,7 +251,7 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
                     <Button type="button" variant="outline" onClick={onClose} className="mr-2">Cancelar</Button>
                     <Button type="submit">Guardar Inversión</Button>
                 </div>
-            </form>
-        </Modal>
+            </form >
+        </Modal >
     );
 }
