@@ -8,9 +8,10 @@ export function InvestmentTimeline() {
 
     // Build cumulative investment data from transactions
     const chartData = useMemo(() => {
-        // Filter only Buy/Sell/Deposit transactions for the timeline
+        // Only count Buy transactions for invested capital
+        // Deposits are for capital account, not invested amount
         const relevantTransactions = transactions
-            .filter(t => ['Buy', 'Deposit'].includes(t.type))
+            .filter(t => t.type === 'Buy')
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         if (relevantTransactions.length === 0) return [];
@@ -19,14 +20,7 @@ export function InvestmentTimeline() {
         const data: { date: string; value: number; label: string }[] = [];
 
         relevantTransactions.forEach(t => {
-            if (t.type === 'Buy') {
-                cumulative += t.amount;
-            } else if (t.type === 'Deposit') {
-                // Deposits add to available capital, not invested amount
-                // We'll track total capital flow
-                cumulative += t.amount;
-            }
-
+            cumulative += t.amount;
             data.push({
                 date: t.date,
                 value: cumulative,

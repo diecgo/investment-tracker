@@ -2,9 +2,9 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#ff7300'];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#ff7300', '#a4de6c', '#d084d8', '#8dd1e1', '#ffb347'];
 
 // Spanish translations for investment types
 const TYPE_LABELS: Record<string, string> = {
@@ -24,24 +24,30 @@ export function AllocationChart() {
 
     const activeInvestments = investments.filter(i => i.status === 'Active');
 
-    // Group investments by selected mode
-    const chartData = activeInvestments.reduce((acc, inv) => {
-        const currentPrice = inv.currentPrice ?? inv.buyPrice;
-        const value = inv.quantity * currentPrice;
+    // Group investments by selected mode and sort by value descending
+    const chartData = useMemo(() => {
+        const grouped = activeInvestments.reduce((acc, inv) => {
+            const currentPrice = inv.currentPrice ?? inv.buyPrice;
+            const value = inv.quantity * currentPrice;
 
-        const key = viewMode === 'type' ? inv.type : inv.symbol;
-        const label = viewMode === 'type'
-            ? (TYPE_LABELS[inv.type] || inv.type)
-            : `${inv.symbol} (${inv.name})`;
+            const key = viewMode === 'type' ? inv.type : inv.symbol;
+            // For symbol view, just show the symbol
+            const label = viewMode === 'type'
+                ? (TYPE_LABELS[inv.type] || inv.type)
+                : inv.symbol;
 
-        const existing = acc.find(d => d.key === key);
-        if (existing) {
-            existing.value += value;
-        } else {
-            acc.push({ key, name: label, value });
-        }
-        return acc;
-    }, [] as { key: string; name: string; value: number }[]);
+            const existing = acc.find(d => d.key === key);
+            if (existing) {
+                existing.value += value;
+            } else {
+                acc.push({ key, name: label, value });
+            }
+            return acc;
+        }, [] as { key: string; name: string; value: number }[]);
+
+        // Sort by value descending
+        return grouped.sort((a, b) => b.value - a.value);
+    }, [activeInvestments, viewMode]);
 
     if (chartData.length === 0) {
         return (
@@ -85,17 +91,12 @@ export function AllocationChart() {
                         <PieChart>
                             <Pie
                                 data={chartData}
-                                cx="50%"
+                                cx="35%"
                                 cy="50%"
                                 innerRadius={50}
-                                outerRadius={70}
-                                paddingAngle={3}
+                                outerRadius={80}
+                                paddingAngle={2}
                                 dataKey="value"
-                                label={({ name, percent }) => {
-                                    const displayName = name ?? '';
-                                    return `${displayName.length > 10 ? displayName.slice(0, 10) + '...' : displayName} ${((percent ?? 0) * 100).toFixed(0)}%`;
-                                }}
-                                labelLine={false}
                             >
                                 {chartData.map((_, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -104,7 +105,12 @@ export function AllocationChart() {
                             <Tooltip
                                 formatter={(value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)}
                             />
-                            <Legend />
+                            <Legend
+                                layout="vertical"
+                                align="right"
+                                verticalAlign="middle"
+                                wrapperStyle={{ paddingLeft: '20px', fontSize: '12px' }}
+                            />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
@@ -112,3 +118,4 @@ export function AllocationChart() {
         </Card>
     );
 }
+
