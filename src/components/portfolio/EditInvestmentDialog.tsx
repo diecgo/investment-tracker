@@ -3,6 +3,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { useStore } from "@/store/useStore";
 import type { Investment, InvestmentType } from "@/types";
@@ -29,7 +30,8 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
     const [quantity, setQuantity] = useState<string>("");
     const [buyPrice, setBuyPrice] = useState<string>("");
     const [totalInvested, setTotalInvested] = useState<string>("");
-    const [date, setDate] = useState("");
+    const [purchaseDate, setPurchaseDate] = useState("");
+    const [notes, setNotes] = useState("");
 
     // Currency Conversion State
     const [isForeignCurrency, setIsForeignCurrency] = useState(false);
@@ -42,7 +44,8 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
             setQuantity(investment.quantity.toString());
             setBuyPrice(investment.buyPrice.toString());
             setTotalInvested(investment.totalInvested.toString());
-            setDate(investment.purchaseDate);
+            setPurchaseDate(investment.purchaseDate);
+            setNotes(investment.notes || "");
             // We don't save exchange rate history, so default "false" or assume EUR.
             setIsForeignCurrency(false);
         }
@@ -89,7 +92,8 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
             quantity: Number(quantity),
             buyPrice: finalBuyPriceEUR,
             totalInvested: finalTotalInvestedEUR,
-            purchaseDate: date,
+            purchaseDate,
+            notes,
         });
 
         onClose();
@@ -114,13 +118,23 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="edit-date">Fecha Compra</Label>
-                        <Input id="edit-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+                        <Input id="edit-date" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
                     </div>
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="edit-name">Nombre</Label>
                     <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="edit-notes">Notas (Opcional)</Label>
+                    <Textarea
+                        id="edit-notes"
+                        placeholder="Editar notas..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                    />
                 </div>
 
                 <div className="flex items-center space-x-4 border-t border-b py-2">

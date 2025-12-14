@@ -5,7 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/store/useStore";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowUpRight, ArrowDownRight, Edit2, RefreshCw, Loader2, ArrowUpDown, Check, X, Trash2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Edit2, RefreshCw, Loader2, ArrowUpDown, Check, X, Trash2, StickyNote } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useState, useMemo } from "react";
 import { SellInvestmentDialog } from "./SellInvestmentDialog";
 import { EditInvestmentDialog } from "./EditInvestmentDialog";
@@ -241,7 +247,23 @@ export function InvestmentTable() {
 
                                 return (
                                     <TableRow key={inv.id}>
-                                        <TableCell className="font-medium">{inv.symbol}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <div className="flex items-center gap-2">
+                                                {inv.symbol}
+                                                {inv.notes && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <StickyNote className="h-4 w-4 text-yellow-500 cursor-help" />
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p className="max-w-xs">{inv.notes}</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell>{inv.name}</TableCell>
                                         <TableCell>
                                             <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors border-transparent bg-secondary text-secondary-foreground">

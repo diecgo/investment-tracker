@@ -11,10 +11,16 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Edit2, Trash2, Ghost, PlusCircle } from "lucide-react";
+import { Edit2, Trash2, Ghost, PlusCircle, StickyNote } from "lucide-react";
 import { useState } from "react";
 import { EditInvestmentDialog } from "@/components/portfolio/EditInvestmentDialog";
 import { AddInvestmentDialog } from "@/components/portfolio/AddInvestmentDialog";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Investment } from "@/types";
 
 export default function SimulationPage() {
@@ -126,7 +132,23 @@ export default function SimulationPage() {
 
                                     return (
                                         <TableRow key={item.id}>
-                                            <TableCell className="font-medium">{item.symbol}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    {item.symbol}
+                                                    {item.notes && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <StickyNote className="h-4 w-4 text-yellow-500 cursor-help" />
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p className="max-w-xs">{item.notes}</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell>{item.type}</TableCell>
                                             <TableCell className="text-right">{item.quantity.toLocaleString('es-ES', { maximumFractionDigits: 6 })}</TableCell>
                                             <TableCell className="text-right">{formatCurrency(item.buyPrice)}</TableCell>

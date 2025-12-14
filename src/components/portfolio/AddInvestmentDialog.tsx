@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useStore } from "@/store/useStore";
 import type { InvestmentType } from "@/types";
 import { ArrowRightLeft, Ghost } from "lucide-react";
@@ -33,7 +35,8 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
     const [isForeignCurrency, setIsForeignCurrency] = useState(false);
     const [exchangeRate, setExchangeRate] = useState<string>("0.85"); // Default example rate
 
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
+    const [notes, setNotes] = useState("");
 
     // Auto-calculation effect
     useEffect(() => {
@@ -85,9 +88,9 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
             quantity: Number(quantity),
             buyPrice: finalBuyPriceEUR,
             totalInvested: finalTotalInvestedEUR,
-            purchaseDate: date,
+            purchaseDate,
             status: isSimulation ? 'Simulation' : 'Active',
-            notes: (isForeignCurrency ? `Bought in USD at rate ${rate}. ` : "") + (isSimulation ? "[SIMULACIÓN]" : "")
+            notes: notes
         });
 
         // Reset and close
@@ -99,6 +102,7 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
         setIsForeignCurrency(false);
         setIsSimulation(false);
         setExchangeRate("0.85");
+        setNotes("");
         onClose();
     };
 
@@ -122,7 +126,7 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="date">Fecha Compra</Label>
-                        <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+                        <Input id="date" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
                     </div>
                 </div>
 
@@ -147,6 +151,16 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
                         <Label htmlFor="name">Nombre (Opcional)</Label>
                         <Input id="name" placeholder="Apple Inc." value={name} onChange={(e) => setName(e.target.value)} />
                     </div>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="add-notes">Notas (Opcional)</Label>
+                    <Textarea
+                        id="add-notes"
+                        placeholder="Escribe aquí recordatorios, estrategias..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                    />
                 </div>
 
                 <div className="flex items-center space-x-4 border-t border-b py-3 bg-slate-50 -mx-6 px-6">
@@ -276,7 +290,7 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
                     <Button type="button" variant="outline" onClick={onClose} className="mr-2">Cancelar</Button>
                     <Button type="submit">Guardar Inversión</Button>
                 </div>
-            </form >
-        </Modal >
+            </form>
+        </Modal>
     );
 }

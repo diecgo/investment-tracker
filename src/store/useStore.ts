@@ -262,6 +262,7 @@ export const useStore = create<StoreState>((set, get) => ({
         if (data.purchaseDate) updatePayload.purchase_date = data.purchaseDate; // Map to snake_case
         if (data.quantity !== undefined) updatePayload.quantity = data.quantity;
         if (data.buyPrice !== undefined) updatePayload.buy_price = data.buyPrice;
+        if (data.notes !== undefined) updatePayload.notes = data.notes;
 
         // Calculate capital adjustment logic
         if (data.totalInvested !== undefined) {
