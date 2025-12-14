@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-tabs": "^1.1.13",
     "@supabase/supabase-js": "^2.87.1",
     "@tailwindcss/postcss": "^4.1.18",
     "class-variance-authority": "^0.7.1",
