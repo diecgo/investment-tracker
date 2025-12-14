@@ -7,28 +7,31 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStore } from "@/store/useStore";
 import { formatCurrency } from "@/lib/utils";
-import { Download } from "lucide-react";
+import { Download, Trash2, Search } from "lucide-react";
 
 export default function ReportsPage() {
-    const { investments, transactions } = useStore();
+    const { investments, transactions, deleteSellTransaction } = useStore();
 
     // Filters state
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [typeFilter, setTypeFilter] = useState<string>("All");
+    const [searchQuery, setSearchQuery] = useState("");
 
     // 1. ACTIVE PORTFOLIO LOGIC
     // Filter only ACTIVE investments for the main view
     const activeInvestments = investments.filter(inv => {
         const matchesType = typeFilter === "All" || inv.type === typeFilter;
         const isActive = inv.status === "Active" && inv.quantity > 0;
+        const matchesSearch = inv.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            inv.name.toLowerCase().includes(searchQuery.toLowerCase());
 
         let matchesDate = true;
         // For active holdings, purchase date is relevant
         if (startDate) matchesDate = matchesDate && inv.purchaseDate >= startDate;
         if (endDate) matchesDate = matchesDate && inv.purchaseDate <= endDate;
 
-        return matchesType && isActive && matchesDate;
+        return matchesType && isActive && matchesDate && matchesSearch;
     });
 
     // Accumulate Active Data (group by Symbol)
@@ -67,12 +70,14 @@ export default function ReportsPage() {
         const investment = investments.find(i => i.id === t.investmentId);
 
         const matchesType = typeFilter === "All" || (investment ? investment.type === typeFilter : true);
+        const matchesSearch = (investment?.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+            (investment?.name.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
         let matchesDate = true;
         if (startDate) matchesDate = matchesDate && t.date >= startDate;
         if (endDate) matchesDate = matchesDate && t.date <= endDate;
 
-        return isSell && matchesType && matchesDate;
+        return isSell && matchesType && matchesDate && matchesSearch;
     });
 
     // Calculate Realized P/L for each transaction
@@ -173,7 +178,14 @@ export default function ReportsPage() {
                     <CardTitle>Filtros</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                            <Label>Buscar (Símbolo/Nombre)</Label>
+                            <div className="relative">
+                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input placeholder="ej. AAPL, Bitcoin..." className="pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                            </div>
+                        </div>
                         <div className="space-y-2">
                             <Label>Desde</Label>
                             <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
@@ -283,12 +295,13 @@ export default function ReportsPage() {
                                 <TableHead className="text-right">Precio Venta</TableHead>
                                 <TableHead className="text-right">Valor Venta</TableHead>
                                 <TableHead className="text-right">Bº Realizado</TableHead>
+                                <TableHead className="text-center">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {realizedOperations.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                                    <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
                                         No hay ventas realizadas en este periodo.
                                     </TableCell>
                                 </TableRow>
@@ -305,6 +318,20 @@ export default function ReportsPage() {
                                             <TableCell className="text-right">{formatCurrency(op.saleValue)}</TableCell>
                                             <TableCell className={`text-right ${isPos ? 'text-green-600' : 'text-red-600'}`}>
                                                 {formatCurrency(op.profit)} ({op.profitPercent.toFixed(2)}%)
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        if (confirm(`¿Eliminar esta operación del historial?\n\nSe revertirá la venta:\n- Se descontarán ${formatCurrency(op.saleValue)} de tu capital.\n- Se devolverán ${Number(op.quantity)} unidades de ${op.symbol} a tu cartera.`)) {
+                                                            deleteSellTransaction(op.id);
+                                                        }
+                                                    }}
+                                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </TableCell>
                                         </TableRow>
                                     );

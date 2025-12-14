@@ -34,6 +34,7 @@ interface StoreState {
 
     deleteSimulation: (id: string) => Promise<void>;
     deleteRealInvestment: (id: string) => Promise<void>;
+    deleteSellTransaction: (transactionId: string) => Promise<void>;
 
     // Helpers
     getSummary: () => {
@@ -337,9 +338,7 @@ export const useStore = create<StoreState>((set, get) => ({
         await supabase.from('transactions').delete().eq('investment_id', id);
         await supabase.from('investments').delete().eq('id', id);
 
-        // 2. Log Adjustment (Refund) - actually we are undoing, so maybe we just reverse the capital?
-        // User asked "if I make a mistake". So we should give the money back.
-        // We can add a log "Correction: Deleted Investment"
+        // 2. Log Adjustment (Refund)
         await supabase.from('transactions').insert({
             user_id: user.id,
             type: 'Adjustment',
@@ -351,6 +350,45 @@ export const useStore = create<StoreState>((set, get) => ({
         // 3. Restore Capital
         const currentCapital = get().capital;
         await supabase.from('profiles').update({ capital: currentCapital + refundAmount }).eq('id', user.id);
+
+        get().fetchAllData();
+    },
+
+    deleteSellTransaction: async (transactionId) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const transaction = get().transactions.find(t => t.id === transactionId);
+        if (!transaction || transaction.type !== 'Sell') return;
+
+        const investment = get().investments.find(i => i.id === transaction.investmentId);
+        // If investment is gone (deleted manually?), we can only reverse capital. 
+        // But typically we keep sold investments as 'Sold'.
+
+        // 1. Revert Capital (Deduct the sale proceeds)
+        const saleProceeds = transaction.amount;
+        const currentCapital = get().capital;
+        await supabase.from('profiles').update({ capital: currentCapital - saleProceeds }).eq('id', user.id);
+
+        // 2. Restore Investment Quantity
+        if (investment) {
+            const soldQty = transaction.quantity || 0;
+            const newQty = investment.quantity + soldQty;
+
+            // Recalculate total_invested?
+            // Original logic: "newTotalInvested = newQty * investment.buyPrice"
+            // So we just use that formula again.
+            const newTotalInvested = newQty * investment.buyPrice;
+
+            await supabase.from('investments').update({
+                quantity: newQty,
+                total_invested: newTotalInvested,
+                status: 'Active' // Always set active if we restore qty
+            }).eq('id', investment.id);
+        }
+
+        // 3. Delete Transaction
+        await supabase.from('transactions').delete().eq('id', transactionId);
 
         get().fetchAllData();
     },
