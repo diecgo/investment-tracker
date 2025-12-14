@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Edit2, Trash2, Ghost, PlusCircle, StickyNote } from "lucide-react";
+import { Edit2, Trash2, Ghost, PlusCircle, StickyNote, FileText } from "lucide-react";
 import { useState } from "react";
 import { EditInvestmentDialog } from "@/components/portfolio/EditInvestmentDialog";
 import { AddInvestmentDialog } from "@/components/portfolio/AddInvestmentDialog";
@@ -21,6 +21,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { generateInvestmentPDF } from "@/lib/pdfGenerator";
 import type { Investment } from "@/types";
 
 export default function SimulationPage() {
@@ -142,7 +143,7 @@ export default function SimulationPage() {
                                                                     <StickyNote className="h-4 w-4 text-yellow-500 cursor-help" />
                                                                 </TooltipTrigger>
                                                                 <TooltipContent>
-                                                                    <p className="max-w-xs">{item.notes}</p>
+                                                                    <p>{item.notes}</p>
                                                                 </TooltipContent>
                                                             </Tooltip>
                                                         </TooltipProvider>
@@ -190,10 +191,21 @@ export default function SimulationPage() {
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => setEditInvestment(item)}
-                                                        className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-slate-50"
+                                                        className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                                                     >
                                                         <Edit2 className="h-4 w-4" />
                                                     </Button>
+
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => generateInvestmentPDF(item)}
+                                                        className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                                        title="Descargar Ficha PDF"
+                                                    >
+                                                        <FileText className="h-4 w-4" />
+                                                    </Button>
+
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"

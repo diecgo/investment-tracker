@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/store/useStore";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowUpRight, ArrowDownRight, Edit2, RefreshCw, Loader2, ArrowUpDown, Check, X, Trash2, StickyNote } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Edit2, RefreshCw, Loader2, ArrowUpDown, Check, X, Trash2, StickyNote, FileText } from "lucide-react";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { generateInvestmentPDF } from "@/lib/pdfGenerator";
 import { useState, useMemo } from "react";
 import { SellInvestmentDialog } from "./SellInvestmentDialog";
 import { EditInvestmentDialog } from "./EditInvestmentDialog";
@@ -257,7 +258,7 @@ export function InvestmentTable() {
                                                                 <StickyNote className="h-4 w-4 text-yellow-500 cursor-help" />
                                                             </TooltipTrigger>
                                                             <TooltipContent>
-                                                                <p className="max-w-xs">{inv.notes}</p>
+                                                                <p>{inv.notes}</p>
                                                             </TooltipContent>
                                                         </Tooltip>
                                                     </TooltipProvider>
@@ -353,12 +354,24 @@ export function InvestmentTable() {
                                             <div className="flex justify-center space-x-1">
                                                 <Button
                                                     variant="ghost"
-                                                    size="sm"
+                                                    size="icon"
                                                     onClick={() => setEditInvestment(inv)}
+                                                    className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                                                     title="Editar"
                                                 >
                                                     <Edit2 className="h-4 w-4" />
                                                 </Button>
+
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => generateInvestmentPDF(inv)}
+                                                    className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                                    title="Descargar Ficha PDF"
+                                                >
+                                                    <FileText className="h-4 w-4" />
+                                                </Button>
+
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
