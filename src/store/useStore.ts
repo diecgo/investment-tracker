@@ -335,8 +335,17 @@ export const useStore = create<StoreState>((set, get) => ({
         // 1. Delete Investment (Cascade should handle Transactions typically, but we should verify. 
         // If not, we should delete transactions first. Assuming Cascade for now or loose coupling, 
         // but let's delete transactions manually to be clean/safe if no FK cascade)
-        await supabase.from('transactions').delete().eq('investment_id', id);
-        await supabase.from('investments').delete().eq('id', id);
+        const { error: txError } = await supabase.from('transactions').delete().eq('investment_id', id);
+        if (txError) {
+            console.error("Error deleting transactions:", txError);
+            return;
+        }
+
+        const { error: invError } = await supabase.from('investments').delete().eq('id', id);
+        if (invError) {
+            console.error("Error deleting investment:", invError);
+            return;
+        }
 
         // 2. Log Adjustment (Refund)
         await supabase.from('transactions').insert({
@@ -388,7 +397,10 @@ export const useStore = create<StoreState>((set, get) => ({
         }
 
         // 3. Delete Transaction
-        await supabase.from('transactions').delete().eq('id', transactionId);
+        const { error } = await supabase.from('transactions').delete().eq('id', transactionId);
+        if (error) {
+            console.error("Error deleting transaction (undo sell):", error);
+        }
 
         get().fetchAllData();
     },
