@@ -33,6 +33,7 @@ interface StoreState {
     updateCurrentPrice: (id: string, price: number) => Promise<void>;
 
     deleteSimulation: (id: string) => Promise<void>;
+    deleteRealInvestment: (id: string) => Promise<void>;
 
     // Helpers
     getSummary: () => {
@@ -319,6 +320,39 @@ export const useStore = create<StoreState>((set, get) => ({
         set((state) => ({
             investments: state.investments.filter(i => i.id !== id)
         }));
+    },
+
+    deleteRealInvestment: async (id) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const investment = get().investments.find(i => i.id === id);
+        if (!investment) return;
+
+        const refundAmount = investment.totalInvested;
+
+        // 1. Delete Investment (Cascade should handle Transactions typically, but we should verify. 
+        // If not, we should delete transactions first. Assuming Cascade for now or loose coupling, 
+        // but let's delete transactions manually to be clean/safe if no FK cascade)
+        await supabase.from('transactions').delete().eq('investment_id', id);
+        await supabase.from('investments').delete().eq('id', id);
+
+        // 2. Log Adjustment (Refund) - actually we are undoing, so maybe we just reverse the capital?
+        // User asked "if I make a mistake". So we should give the money back.
+        // We can add a log "Correction: Deleted Investment"
+        await supabase.from('transactions').insert({
+            user_id: user.id,
+            type: 'Adjustment',
+            amount: refundAmount,
+            date: new Date().toISOString().split('T')[0],
+            description: `Refund: Deleted ${investment.symbol}`
+        });
+
+        // 3. Restore Capital
+        const currentCapital = get().capital;
+        await supabase.from('profiles').update({ capital: currentCapital + refundAmount }).eq('id', user.id);
+
+        get().fetchAllData();
     },
 
 

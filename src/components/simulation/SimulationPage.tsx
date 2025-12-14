@@ -11,14 +11,16 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Edit2, Trash2, Ghost } from "lucide-react";
+import { Edit2, Trash2, Ghost, PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { EditInvestmentDialog } from "@/components/portfolio/EditInvestmentDialog";
+import { AddInvestmentDialog } from "@/components/portfolio/AddInvestmentDialog";
 import type { Investment } from "@/types";
 
 export default function SimulationPage() {
     const { investments, deleteSimulation, updateCurrentPrice } = useStore();
     const [editInvestment, setEditInvestment] = useState<Investment | null>(null);
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
     // Filter only simulations
     const simulations = investments.filter(i => i.status === 'Simulation');
@@ -46,8 +48,11 @@ export default function SimulationPage() {
                     Simulaciones
                 </h2>
                 <div className="flex items-center space-x-2">
-                    {/* Could add a specific "Add Simulation" button here if needed, 
-                        or rely on the main "Add" button with checkbox */}
+                    <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
+                        <PlusCircle className="h-4 w-4" />
+                        <span className="hidden sm:inline">Añadir Simulación</span>
+                        <span className="sm:hidden">Añadir</span>
+                    </Button>
                 </div>
             </div>
 
@@ -190,6 +195,12 @@ export default function SimulationPage() {
                 isOpen={!!editInvestment}
                 onClose={() => setEditInvestment(null)}
                 investment={editInvestment}
+            />
+
+            <AddInvestmentDialog
+                isOpen={isAddDialogOpen}
+                onClose={() => setIsAddDialogOpen(false)}
+                defaultIsSimulation={true}
             />
         </div>
     );

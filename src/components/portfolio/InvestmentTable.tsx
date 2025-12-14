@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/store/useStore";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowUpRight, ArrowDownRight, Edit2, RefreshCw, Loader2, ArrowUpDown, Check, X } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Edit2, RefreshCw, Loader2, ArrowUpDown, Check, X, Trash2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { SellInvestmentDialog } from "./SellInvestmentDialog";
 import { EditInvestmentDialog } from "./EditInvestmentDialog";
@@ -15,6 +15,7 @@ import type { Investment } from "@/types";
 export function InvestmentTable() {
     const investments = useStore(state => state.investments);
     const updateCurrentPrice = useStore(state => state.updateCurrentPrice);
+    const deleteRealInvestment = useStore(state => state.deleteRealInvestment);
 
     // Filter out active investments
     const activeInvestments = investments.filter(i => i.status === 'Active');
@@ -342,6 +343,19 @@ export function InvestmentTable() {
                                                     onClick={() => setSellInvestment(inv)}
                                                 >
                                                     Vender
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        if (confirm(`¿Estás seguro de ELIMINAR ${inv.symbol}? \n\nEsto borrará la inversión y devolverá el capital (${formatCurrency(inv.totalInvested)}) a tu cuenta.`)) {
+                                                            deleteRealInvestment(inv.id);
+                                                        }
+                                                    }}
+                                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    title="Eliminar (Peligro)"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
                                         </TableCell>

@@ -11,9 +11,10 @@ import { ArrowRightLeft, Ghost } from "lucide-react";
 interface AddInvestmentDialogProps {
     isOpen: boolean;
     onClose: () => void;
+    defaultIsSimulation?: boolean;
 }
 
-export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProps) {
+export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = false }: AddInvestmentDialogProps) {
     const addInvestment = useStore(state => state.addInvestment);
 
     const [symbol, setSymbol] = useState("");
@@ -59,7 +60,13 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
         }
     }, [totalInvested, buyPrice, quantity, inputMode, isForeignCurrency, exchangeRate]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    useEffect(() => {
+        if (isOpen) {
+            setIsSimulation(defaultIsSimulation);
+        }
+    }, [isOpen, defaultIsSimulation]);
+
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!symbol || !quantity || !buyPrice) return;
 
@@ -100,7 +107,7 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Añadir Inversión">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="type">Tipo</Label>
