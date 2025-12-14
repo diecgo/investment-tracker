@@ -4,6 +4,7 @@ import Dashboard from "@/components/dashboard/Dashboard";
 import PortfolioPage from "@/components/portfolio/PortfolioPage";
 import CapitalPage from "@/components/capital/CapitalPage";
 import ReportsPage from "@/components/reports/ReportsPage";
+import SimulationPage from "@/components/simulation/SimulationPage";
 import SpreadSimulator from "@/components/tools/SpreadSimulator";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { useEffect, useState, type ReactNode } from "react";
@@ -61,6 +62,7 @@ function App() {
           <Route path="portfolio" element={<PortfolioPage />} />
           <Route path="capital" element={<CapitalPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="simulation" element={<SimulationPage />} />
           <Route path="tools/spread" element={<SpreadSimulator />} />
         </Route>
       </Routes>

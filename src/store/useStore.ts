@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import type { Investment, Transaction } from '../types';
+import type { Investment, Transaction, InvestmentStatus } from '../types';
 
 interface StoreState {
     investments: Investment[];
@@ -15,7 +15,7 @@ interface StoreState {
     withdrawCapital: (amount: number, date: string, description?: string) => Promise<void>;
 
     addInvestment: (
-        investment: Omit<Investment, 'id' | 'status' | 'currentPrice'>
+        investment: Omit<Investment, 'id' | 'currentPrice'>
     ) => Promise<void>;
 
     sellInvestment: (
@@ -27,10 +27,12 @@ interface StoreState {
 
     updateInvestment: (
         id: string,
-        data: Partial<Omit<Investment, 'id' | 'status'>>
+        data: Partial<Omit<Investment, 'id'>>
     ) => Promise<void>;
 
     updateCurrentPrice: (id: string, price: number) => Promise<void>;
+
+    deleteSimulation: (id: string) => Promise<void>;
 
     // Helpers
     getSummary: () => {
@@ -154,6 +156,7 @@ export const useStore = create<StoreState>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        const isSimulation = invData.status === 'Simulation';
         const cost = invData.totalInvested;
 
         // 1. Insert Investment
@@ -167,11 +170,17 @@ export const useStore = create<StoreState>((set, get) => ({
             current_price: invData.buyPrice,
             total_invested: invData.totalInvested,
             purchase_date: invData.purchaseDate,
-            status: 'Active',
+            status: isSimulation ? 'Simulation' : 'Active', // Allow setting Simulation
             notes: invData.notes
         }).select().single();
 
         if (error) { console.error(error); return; }
+
+        // STOP HERE if Simulation (No Transacton, No Capital Change)
+        if (isSimulation) {
+            get().fetchAllData();
+            return;
+        }
 
         // 2. Log Transaction
         await supabase.from('transactions').insert({
@@ -299,9 +308,20 @@ export const useStore = create<StoreState>((set, get) => ({
         }));
     },
 
+    deleteSimulation: async (id) => {
+        // Simple delete for simulations
+        await supabase.from('investments').delete().eq('id', id);
+
+        // Optimistic update
+        set((state) => ({
+            investments: state.investments.filter(i => i.id !== id)
+        }));
+    },
+
 
     getSummary: () => {
         const state = get();
+        // Filter out simulations AND Sold items for the main dashboard summary
         const activeInvestments = state.investments.filter(i => i.status === 'Active');
 
         const totalInvested = activeInvestments.reduce((sum, inv) => sum + (inv.quantity * inv.buyPrice), 0);

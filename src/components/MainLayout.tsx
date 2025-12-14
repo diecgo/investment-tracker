@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, PieChart, Wallet, FileText, LogOut, User, KeyRound, Calculator } from "lucide-react";
+import { LayoutDashboard, PieChart, Wallet, FileText, LogOut, User, KeyRound, Calculator, Ghost } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,8 @@ export default function MainLayout() {
         { name: "Inversiones", href: "/portfolio", icon: PieChart },
         { name: "Capital", href: "/capital", icon: Wallet },
         { name: "Informes", href: "/reports", icon: FileText },
-        { name: "Simulador", href: "/tools/spread", icon: Calculator },
+        { name: "Simular Inv.", href: "/simulation", icon: Ghost },
+        { name: "Coste Spread", href: "/tools/spread", icon: Calculator },
     ];
 
     return (

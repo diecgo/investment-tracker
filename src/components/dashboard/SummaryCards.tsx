@@ -38,7 +38,7 @@ export function SummaryCards() {
     const isProfit = profitLoss >= 0;
 
     return (
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
             {/* Capital Total */}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -46,7 +46,7 @@ export function SummaryCards() {
                     <Wallet className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(capitalTotal)}</div>
+                    <div className="text-lg md:text-2xl font-bold">{formatCurrency(capitalTotal)}</div>
                     <p className={`text-xs flex items-center gap-1 ${isCapitalPositive ? 'text-green-600' : 'text-red-600'}`}>
                         {isCapitalPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                         {isCapitalPositive ? '+' : ''}{capitalChangePercent.toFixed(2)}%
@@ -61,7 +61,7 @@ export function SummaryCards() {
                     <Banknote className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(capital)}</div>
+                    <div className="text-lg md:text-2xl font-bold">{formatCurrency(capital)}</div>
                     <p className="text-xs text-muted-foreground">
                         Para invertir
                     </p>
@@ -75,7 +75,7 @@ export function SummaryCards() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(totalInvested)}</div>
+                    <div className="text-lg md:text-2xl font-bold">{formatCurrency(totalInvested)}</div>
                     <p className="text-xs text-muted-foreground">
                         En posiciones
                     </p>
@@ -89,7 +89,7 @@ export function SummaryCards() {
                     <PieChart className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(currentInvestmentValue)}</div>
+                    <div className="text-lg md:text-2xl font-bold">{formatCurrency(currentInvestmentValue)}</div>
                     <p className={`text-xs flex items-center gap-1 ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
                         {isProfit ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                         {isProfit ? '+' : ''}{profitLossPercent.toFixed(2)}%
@@ -108,7 +108,7 @@ export function SummaryCards() {
                     )}
                 </CardHeader>
                 <CardContent>
-                    <div className={`text-2xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className={`text-lg md:text-2xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
                         {isProfit ? '+' : ''}{formatCurrency(profitLoss)}
                     </div>
                     <p className={`text-xs ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
@@ -124,7 +124,7 @@ export function SummaryCards() {
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{activeInvestments.length}</div>
+                    <div className="text-lg md:text-2xl font-bold">{activeInvestments.length}</div>
                     <p className="text-xs text-muted-foreground">
                         Activas
                     </p>

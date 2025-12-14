@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { useStore } from "@/store/useStore";
 import type { InvestmentType } from "@/types";
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft, Ghost } from "lucide-react";
 
 interface AddInvestmentDialogProps {
     isOpen: boolean;
@@ -19,6 +19,7 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
     const [symbol, setSymbol] = useState("");
     const [name, setName] = useState("");
     const [type, setType] = useState<InvestmentType>("Stock");
+    const [isSimulation, setIsSimulation] = useState(false);
 
     // Input modes: "Quantity & Price" or "Total Invested & Price"
     const [inputMode, setInputMode] = useState<"standard" | "capital">("capital");
@@ -78,7 +79,8 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
             buyPrice: finalBuyPriceEUR,
             totalInvested: finalTotalInvestedEUR,
             purchaseDate: date,
-            notes: isForeignCurrency ? `Bought in USD at rate ${rate}` : ""
+            status: isSimulation ? 'Simulation' : 'Active',
+            notes: (isForeignCurrency ? `Bought in USD at rate ${rate}. ` : "") + (isSimulation ? "[SIMULACIÓN]" : "")
         });
 
         // Reset and close
@@ -88,6 +90,7 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
         setBuyPrice("");
         setTotalInvested("");
         setIsForeignCurrency(false);
+        setIsSimulation(false);
         setExchangeRate("0.85");
         onClose();
     };
@@ -163,6 +166,21 @@ export function AddInvestmentDialog({ isOpen, onClose }: AddInvestmentDialogProp
                             🔢 Por Cantidad
                         </button>
                     </div>
+                </div>
+
+                {/* Simulation Toggle */}
+                <div className="flex items-center justify-between bg-slate-50 p-2 rounded-md border border-slate-200 mb-2">
+                    <div className="flex items-center space-x-2">
+                        <Ghost className="h-4 w-4 text-indigo-500" />
+                        <Label htmlFor="simulation-toggle" className="cursor-pointer text-indigo-700 font-medium">Es una simulación? (No afecta capital)</Label>
+                    </div>
+                    <input
+                        id="simulation-toggle"
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        checked={isSimulation}
+                        onChange={(e) => setIsSimulation(e.target.checked)}
+                    />
                 </div>
 
                 {/* Currency Converter Toggle */}

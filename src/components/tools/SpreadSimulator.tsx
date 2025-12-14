@@ -125,9 +125,9 @@ export default function SpreadSimulator() {
     }, [buyPrice, sellPrice, inputValue, mode]);
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Simulador de Spread</h2>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Simulador de Spread</h2>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -197,10 +197,10 @@ export default function SpreadSimulator() {
                             <CardTitle>Resultados</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Inversión Total</p>
-                                    <div className="text-xl font-bold text-slate-800">
+                                    <div className="text-lg md:text-xl font-bold text-slate-800">
                                         {formatCurrency(totalInvestment)}
                                     </div>
                                     {mode === 'amount' && (
@@ -211,7 +211,7 @@ export default function SpreadSimulator() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Diferencia (Spread)</p>
-                                    <div className="text-xl font-bold">
+                                    <div className="text-lg md:text-xl font-bold">
                                         {spread.toLocaleString('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 5 })}
                                     </div>
                                 </div>
@@ -243,7 +243,7 @@ export default function SpreadSimulator() {
                                         Pérdida Inmediata
                                     </span>
                                 </div>
-                                <div className="text-3xl font-bold text-red-600">
+                                <div className="text-xl md:text-3xl font-bold text-red-600">
                                     -{formatCurrency(spreadCost)}
                                 </div>
                                 <p className="text-sm text-red-700 mt-1">

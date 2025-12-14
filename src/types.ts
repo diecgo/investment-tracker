@@ -1,5 +1,5 @@
 export type InvestmentType = 'Stock' | 'Crypto' | 'Fund' | 'ETF' | 'Bond' | 'Other';
-export type InvestmentStatus = 'Active' | 'Sold';
+export type InvestmentStatus = 'Active' | 'Sold' | 'Simulation';
 
 export interface Investment {
     id: string;
