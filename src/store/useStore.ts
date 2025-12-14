@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import type { Investment, Transaction, InvestmentStatus } from '../types';
+import type { Investment, Transaction } from '../types';
 
 interface StoreState {
     investments: Investment[];
