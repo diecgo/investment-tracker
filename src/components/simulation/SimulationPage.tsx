@@ -10,10 +10,15 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Ghost } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Edit2, Trash2, Ghost } from "lucide-react";
+import { useState } from "react";
+import { EditInvestmentDialog } from "@/components/portfolio/EditInvestmentDialog";
+import type { Investment } from "@/types";
 
 export default function SimulationPage() {
-    const { investments, deleteSimulation } = useStore();
+    const { investments, deleteSimulation, updateCurrentPrice } = useStore();
+    const [editInvestment, setEditInvestment] = useState<Investment | null>(null);
 
     // Filter only simulations
     const simulations = investments.filter(i => i.status === 'Simulation');
@@ -120,21 +125,57 @@ export default function SimulationPage() {
                                             <TableCell>{item.type}</TableCell>
                                             <TableCell className="text-right">{item.quantity.toLocaleString('es-ES', { maximumFractionDigits: 6 })}</TableCell>
                                             <TableCell className="text-right">{formatCurrency(item.buyPrice)}</TableCell>
-                                            <TableCell className="text-right font-medium">{formatCurrency(currentPrice)}</TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end space-x-1">
+                                                    <Input
+                                                        key={`price-${item.id}-${item.currentPrice}`}
+                                                        type="number"
+                                                        step="any"
+                                                        className="h-8 w-20 text-right"
+                                                        defaultValue={item.currentPrice ?? ""}
+                                                        placeholder={item.buyPrice.toString()}
+                                                        onBlur={(e) => {
+                                                            const val = parseFloat(e.target.value);
+                                                            if (!isNaN(val)) {
+                                                                updateCurrentPrice(item.id, val);
+                                                            }
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const val = parseFloat((e.target as HTMLInputElement).value);
+                                                                if (!isNaN(val)) {
+                                                                    updateCurrentPrice(item.id, val);
+                                                                    (e.target as HTMLElement).blur();
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="text-right">{formatCurrency(item.totalInvested)}</TableCell>
                                             <TableCell className="text-right">{formatCurrency(currentValue)}</TableCell>
                                             <TableCell className={`text-right font-bold ${pl >= 0 ? "text-green-600" : "text-red-600"}`}>
                                                 {plPercent > 0 ? "+" : ""}{plPercent.toFixed(2)}%
                                             </TableCell>
                                             <TableCell>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleDelete(item.id)}
-                                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                <div className="flex justify-end space-x-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setEditInvestment(item)}
+                                                        className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-slate-50"
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleDelete(item.id)}
+                                                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -144,6 +185,12 @@ export default function SimulationPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <EditInvestmentDialog
+                isOpen={!!editInvestment}
+                onClose={() => setEditInvestment(null)}
+                investment={editInvestment}
+            />
         </div>
     );
 }

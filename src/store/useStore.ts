@@ -277,8 +277,11 @@ export const useStore = create<StoreState>((set, get) => ({
         // 1. Update Investment
         await supabase.from('investments').update(updatePayload).eq('id', id);
 
-        // 2. Log Adjustment & Update Capital if needed
-        if (Math.abs(capitalDiff) > 0.01) {
+        // 2. Log Adjustment & Update Capital if needed (SKIP FOR SIMULATIONS)
+        // Check if it's a simulation (either originally or if status is being updated to simulation, though typically status updates aren't handled here)
+        const isSimulation = investment.status === 'Simulation';
+
+        if (!isSimulation && Math.abs(capitalDiff) > 0.01) {
             await supabase.from('transactions').insert({
                 user_id: user.id,
                 type: 'Adjustment',
