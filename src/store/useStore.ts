@@ -453,6 +453,9 @@ export const useStore = create<StoreState>((set, get) => ({
                 case 'Sell':
                     calculatedCapital += t.amount;
                     break;
+                case 'Adjustment':
+                    calculatedCapital += t.amount;
+                    break;
             }
         });
 
@@ -466,6 +469,7 @@ export const useStore = create<StoreState>((set, get) => ({
         - Retiradas: ${breakdown['Withdraw']?.toFixed(2) || 0} €
         - Compras: ${breakdown['Buy']?.toFixed(2) || 0} €
         - Ventas: ${breakdown['Sell']?.toFixed(2) || 0} €
+        - Ajustes (Ediciones): ${breakdown['Adjustment']?.toFixed(2) || 0} €
         
         capital Calculado: ${calculatedCapital.toFixed(2)} €`;
 
