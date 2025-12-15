@@ -37,6 +37,7 @@ interface StoreState {
     deleteSellTransaction: (transactionId: string) => Promise<void>;
     deleteTransaction: (transactionId: string) => Promise<void>;
     recalculateCapital: () => Promise<void>;
+    snapshotDailyReport: () => Promise<void>;
 
     // Helpers
     getSummary: () => {
@@ -107,6 +108,9 @@ export const useStore = create<StoreState>((set, get) => ({
                 transactions,
                 isLoading: false
             });
+
+            // Trigger snapshot (fire and forget, don't await blocking UI)
+            get().snapshotDailyReport();
 
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -492,5 +496,65 @@ export const useStore = create<StoreState>((set, get) => ({
 
         // Refresh
         get().fetchAllData();
+    },
+
+    snapshotDailyReport: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const state = get();
+        const today = new Date().toISOString().split('T')[0];
+
+        // 1. Calculate Standard Totals
+        const activeInvestments = state.investments.filter(i => i.status === 'Active');
+        const totalInvested = activeInvestments.reduce((sum, inv) => sum + (inv.quantity * inv.buyPrice), 0);
+        const currentValue = activeInvestments.reduce((sum, inv) => {
+            const price = inv.currentPrice ?? inv.buyPrice;
+            return sum + (inv.quantity * price);
+        }, 0);
+
+        // 2. Calculate Daily Metrics (Top Winners/Losers based on total P/L %)
+        // ideally this would be "Daily Change", but we only store current price. 
+        // So we will show "Current Performance" as the daily snapshot.
+        const performances = activeInvestments.map(inv => {
+            const price = inv.currentPrice ?? inv.buyPrice;
+            const change = price - inv.buyPrice;
+            const changePercent = (change / inv.buyPrice) * 100;
+            return { symbol: inv.symbol, change, changePercent };
+        });
+
+        performances.sort((a, b) => b.changePercent - a.changePercent);
+        const topWinners = performances.filter(p => p.changePercent > 0).slice(0, 3);
+        const topLosers = performances.filter(p => p.changePercent < 0).reverse().slice(0, 3);
+
+        const metrics = {
+            dailyProfit: 0, // Placeholder, would need previous day close to calculate real daily P/L
+            topWinners,
+            topLosers
+        };
+
+        // 3. Get Today's Operations
+        // We filter transactions from state, but state might be old if called before fetch. 
+        // Safer to use the just-fetched transactions or wait for fetch.
+        // But this is usually called AFTER fetchAllData or actions.
+        const dailyOps = state.transactions.filter(t => t.date === today && (t.type === 'Buy' || t.type === 'Sell'));
+
+        // 4. Upsert into DB
+        const payload = {
+            user_id: user.id,
+            date: today,
+            total_invested: totalInvested,
+            current_value: currentValue,
+            metrics: metrics,
+            operations: dailyOps
+        };
+
+        const { error } = await supabase.from('daily_reports').upsert(payload, { onConflict: 'user_id, date' });
+
+        if (error) {
+            console.error("Error saving daily report:", error);
+        } else {
+            console.log("Daily report saved for", today);
+        }
     }
 }));

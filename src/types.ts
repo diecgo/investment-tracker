@@ -35,3 +35,18 @@ export interface PortfolioSummary {
     totalProfitLossPercentage: number;
     availableCapital: number;
 }
+
+export interface DailyMetrics {
+    dailyProfit: number; // Value change today
+    topWinners: { symbol: string, change: number, changePercent: number }[];
+    topLosers: { symbol: string, change: number, changePercent: number }[];
+}
+
+export interface DailyReport {
+    id: string;
+    date: string;
+    totalInvested: number;
+    currentValue: number;
+    metrics: DailyMetrics;
+    operations: Transaction[]; // Subset of transactions from that day
+}
