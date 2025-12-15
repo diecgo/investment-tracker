@@ -259,6 +259,7 @@ export const useStore = create<StoreState>((set, get) => ({
 
         // Determine new values for DB update
         const updatePayload: any = {};
+        if (data.symbol) updatePayload.symbol = data.symbol;
         if (data.name) updatePayload.name = data.name;
         if (data.type) updatePayload.type = data.type;
         if (data.purchaseDate) updatePayload.purchase_date = data.purchaseDate; // Map to snake_case

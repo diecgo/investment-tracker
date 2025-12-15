@@ -18,6 +18,7 @@ interface EditInvestmentDialogProps {
 export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvestmentDialogProps) {
     const updateInvestment = useStore(state => state.updateInvestment);
 
+    const [symbol, setSymbol] = useState("");
     const [name, setName] = useState("");
     const [type, setType] = useState<InvestmentType>("Stock");
 
@@ -39,6 +40,7 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
 
     useEffect(() => {
         if (investment && isOpen) {
+            setSymbol(investment.symbol);
             setName(investment.name);
             setType(investment.type);
             setQuantity(investment.quantity.toString());
@@ -87,6 +89,7 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
         const finalTotalInvestedEUR = Number(totalInvested) || (Number(quantity) * finalBuyPriceEUR);
 
         updateInvestment(investment.id, {
+            symbol,
             name,
             type,
             quantity: Number(quantity),
@@ -104,133 +107,145 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Editar ${investment.symbol}`}>
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-type">Tipo</Label>
-                        <Select id="edit-type" value={type} onChange={(e: any) => setType(e.target.value as InvestmentType)}>
-                            <option value="Stock">Acciones</option>
-                            <option value="Crypto">Criptomonedas</option>
-                            <option value="Fund">Fondos</option>
-                            <option value="ETF">ETF</option>
-                            <option value="Bond">Bonos</option>
-                            <option value="Other">Otros</option>
-                        </Select>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-symbol">Símbolo</Label>
+                            <Input id="edit-symbol" value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-type">Tipo</Label>
+                            <Select
+                                id="edit-type"
+                                value={type}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setType(e.target.value as InvestmentType)}
+                            >
+                                <option value="Stock">Acciones</option>
+                                <option value="Crypto">Criptomonedas</option>
+                                <option value="Fund">Fondos</option>
+                                <option value="Bond">Bonos</option>
+                                <option value="RealEstate">Inmobiliario</option>
+                                <option value="Other">Otro</option>
+                            </Select>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="edit-date">Fecha Compra</Label>
                         <Input id="edit-date" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
                     </div>
-                </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="edit-name">Nombre</Label>
-                    <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="edit-notes">Notas (Opcional)</Label>
-                    <Textarea
-                        id="edit-notes"
-                        placeholder="Editar notas..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                    />
-                </div>
-
-                <div className="flex items-center space-x-4 border-t border-b py-2">
-                    <span className="text-sm font-medium">Modo:</span>
-                    <div className="flex gap-2">
-                        <Button
-                            type="button"
-                            variant={inputMode === "capital" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setInputMode("capital")}
-                        >
-                            Por Capital (EUR)
-                        </Button>
-                        <Button
-                            type="button"
-                            variant={inputMode === "standard" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setInputMode("standard")}
-                        >
-                            Por Cantidad
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Currency Converter Toggle */}
-                <div className="flex items-center justify-between bg-slate-50 p-2 rounded-md border border-slate-200">
-                    <div className="flex items-center space-x-2">
-                        <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="edit-currency-toggle" className="cursor-pointer">Operación en USD?</Label>
-                    </div>
-                    <input
-                        id="edit-currency-toggle"
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        checked={isForeignCurrency}
-                        onChange={(e) => setIsForeignCurrency(e.target.checked)}
-                    />
-                </div>
-
-                {isForeignCurrency && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                        <Label htmlFor="edit-exchangeRate">Tasa de Cambio (USD/EUR)</Label>
-                        <Input
-                            id="edit-exchangeRate"
-                            type="number"
-                            step="any"
-                            placeholder="0.85"
-                            value={exchangeRate}
-                            onChange={(e) => setExchangeRate(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            1 USD = {exchangeRate || '...'} EUR
-                        </p>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="edit-buyPrice">Precio Compra ({isForeignCurrency ? 'USD' : 'EUR'})</Label>
-                        <Input
-                            id="edit-buyPrice"
-                            type="number"
-                            step="any"
-                            value={buyPrice}
-                            onChange={(e) => setBuyPrice(e.target.value)}
-                            required
+                        <Label htmlFor="edit-name">Nombre</Label>
+                        <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-notes">Notas (Opcional)</Label>
+                        <Textarea
+                            id="edit-notes"
+                            placeholder="Editar notas..."
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
                         />
                     </div>
 
-                    {inputMode === "capital" ? (
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-totalInvested">Total a Invertir (EUR)</Label>
-                            <Input
-                                id="edit-totalInvested"
-                                type="number"
-                                step="any"
-                                value={totalInvested}
-                                onChange={(e) => setTotalInvested(e.target.value)}
-                                required
-                            />
-                            {quantity && <p className="text-xs text-muted-foreground">≈ {Number(quantity).toFixed(6)} unidades</p>}
+                    <div className="flex items-center space-x-4 border-t border-b py-2">
+                        <span className="text-sm font-medium">Modo:</span>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant={inputMode === "capital" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setInputMode("capital")}
+                            >
+                                Por Capital (EUR)
+                            </Button>
+                            <Button
+                                type="button"
+                                variant={inputMode === "standard" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setInputMode("standard")}
+                            >
+                                Por Cantidad
+                            </Button>
                         </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-quantity">Cantidad</Label>
+                    </div>
+
+                    {/* Currency Converter Toggle */}
+                    <div className="flex items-center justify-between bg-slate-50 p-2 rounded-md border border-slate-200">
+                        <div className="flex items-center space-x-2">
+                            <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                            <Label htmlFor="edit-currency-toggle" className="cursor-pointer">Operación en USD?</Label>
+                        </div>
+                        <input
+                            id="edit-currency-toggle"
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            checked={isForeignCurrency}
+                            onChange={(e) => setIsForeignCurrency(e.target.checked)}
+                        />
+                    </div>
+
+                    {isForeignCurrency && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                            <Label htmlFor="edit-exchangeRate">Tasa de Cambio (USD/EUR)</Label>
                             <Input
-                                id="edit-quantity"
+                                id="edit-exchangeRate"
                                 type="number"
                                 step="any"
-                                value={quantity}
-                                onChange={(e) => setQuantity(e.target.value)}
-                                required
+                                placeholder="0.85"
+                                value={exchangeRate}
+                                onChange={(e) => setExchangeRate(e.target.value)}
                             />
-                            {totalInvested && <p className="text-xs text-muted-foreground">≈ {Number(totalInvested).toFixed(2)} EUR</p>}
+                            <p className="text-xs text-muted-foreground">
+                                1 USD = {exchangeRate || '...'} EUR
+                            </p>
                         </div>
                     )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-buyPrice">Precio Compra ({isForeignCurrency ? 'USD' : 'EUR'})</Label>
+                            <Input
+                                id="edit-buyPrice"
+                                type="number"
+                                step="any"
+                                value={buyPrice}
+                                onChange={(e) => setBuyPrice(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        {inputMode === "capital" ? (
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-totalInvested">Total a Invertir (EUR)</Label>
+                                <Input
+                                    id="edit-totalInvested"
+                                    type="number"
+                                    step="any"
+                                    value={totalInvested}
+                                    onChange={(e) => setTotalInvested(e.target.value)}
+                                    required
+                                />
+                                {quantity && <p className="text-xs text-muted-foreground">≈ {Number(quantity).toFixed(6)} unidades</p>}
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-quantity">Cantidad</Label>
+                                <Input
+                                    id="edit-quantity"
+                                    type="number"
+                                    step="any"
+                                    value={quantity}
+                                    onChange={(e) => setQuantity(e.target.value)}
+                                    required
+                                />
+                                {totalInvested && <p className="text-xs text-muted-foreground">≈ {Number(totalInvested).toFixed(2)} EUR</p>}
+                            </div>
+                        )}
+                    </div>
+
                 </div>
 
                 <div className="flex justify-end pt-4">
