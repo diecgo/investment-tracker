@@ -105,6 +105,7 @@ export default function SimulationPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Símbolo</TableHead>
+                                <TableHead>Nombre</TableHead>
                                 <TableHead>Tipo</TableHead>
                                 <TableHead className="text-right">Cantidad</TableHead>
                                 <TableHead className="text-right">Precio Compra</TableHead>
@@ -118,7 +119,7 @@ export default function SimulationPage() {
                         <TableBody>
                             {simulations.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="text-center h-24 text-muted-foreground">
+                                    <TableCell colSpan={10} className="text-center h-24 text-muted-foreground">
                                         No hay simulaciones activas.
                                         <br />
                                         Añade una nueva inversión y marca la casilla "Es Simulación".
@@ -150,6 +151,7 @@ export default function SimulationPage() {
                                                     )}
                                                 </div>
                                             </TableCell>
+                                            <TableCell>{item.name}</TableCell>
                                             <TableCell>{item.type}</TableCell>
                                             <TableCell className="text-right">{item.quantity.toLocaleString('es-ES', { maximumFractionDigits: 6 })}</TableCell>
                                             <TableCell className="text-right">{formatCurrency(item.buyPrice)}</TableCell>
