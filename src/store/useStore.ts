@@ -507,19 +507,23 @@ export const useStore = create<StoreState>((set, get) => ({
 
         // 1. Calculate Standard Totals
         const activeInvestments = state.investments.filter(i => i.status === 'Active');
-        const totalInvested = activeInvestments.reduce((sum, inv) => sum + (inv.quantity * inv.buyPrice), 0);
+        // Ensure values are numbers using || 0 fallback
+        const totalInvested = activeInvestments.reduce((sum, inv) => sum + ((inv.quantity || 0) * (inv.buyPrice || 0)), 0);
         const currentValue = activeInvestments.reduce((sum, inv) => {
-            const price = inv.currentPrice ?? inv.buyPrice;
-            return sum + (inv.quantity * price);
+            const price = (inv.currentPrice !== null && inv.currentPrice !== undefined) ? inv.currentPrice : (inv.buyPrice || 0);
+            return sum + ((inv.quantity || 0) * price);
         }, 0);
 
         // 2. Calculate Daily Metrics (Top Winners/Losers based on total P/L %)
-        // ideally this would be "Daily Change", but we only store current price. 
-        // So we will show "Current Performance" as the daily snapshot.
         const performances = activeInvestments.map(inv => {
-            const price = inv.currentPrice ?? inv.buyPrice;
-            const change = price - inv.buyPrice;
-            const changePercent = (change / inv.buyPrice) * 100;
+            const price = (inv.currentPrice !== null && inv.currentPrice !== undefined) ? inv.currentPrice : (inv.buyPrice || 0);
+            const buyPrice = inv.buyPrice || 0;
+
+            // Prevent division by zero
+            if (buyPrice === 0) return { symbol: inv.symbol, change: 0, changePercent: 0 };
+
+            const change = price - buyPrice;
+            const changePercent = (change / buyPrice) * 100;
             return { symbol: inv.symbol, change, changePercent };
         });
 
