@@ -7,16 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStore } from "@/store/useStore";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Minus, Wallet, RefreshCw } from "lucide-react";
+import { Plus, Minus, Wallet, RefreshCw, Trash2 } from "lucide-react";
 
 export default function CapitalPage() {
-    const { capital, transactions, addCapital, withdrawCapital, recalculateCapital } = useStore();
+    const { capital, transactions, addCapital, withdrawCapital, recalculateCapital, deleteTransaction } = useStore();
     const [isDepositOpen, setIsDepositOpen] = useState(false);
     const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
     const [isRecalculating, setIsRecalculating] = useState(false);
 
-    // Capital history = transactions of type Deposit or Withdraw
-    const capitalHistory = transactions.filter(t => t.type === 'Deposit' || t.type === 'Withdraw');
+    // Show ALL transactions for auditing
+    const capitalHistory = transactions;
+
+    const handleDeleteTransaction = async (id: string) => {
+        if (confirm('¿Estás seguro de borrar esta transacción? Esto afectará al saldo al recalcular.')) {
+            await deleteTransaction(id);
+        }
+    }
 
     return (
         <div className="flex-1 space-y-8 p-8 pt-6">
@@ -72,6 +78,7 @@ export default function CapitalPage() {
                                 <TableHead>Tipo</TableHead>
                                 <TableHead>Descripción</TableHead>
                                 <TableHead className="text-right">Cantidad</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -92,8 +99,24 @@ export default function CapitalPage() {
                                             </span>
                                         </TableCell>
                                         <TableCell>{tx.description}</TableCell>
-                                        <TableCell className={`text-right font-medium ${tx.type === 'Deposit' ? 'text-green-600' : 'text-red-600'}`}>
-                                            {tx.type === 'Deposit' ? '+' : '-'}{formatCurrency(tx.amount)}
+                                        <TableCell className={`text-right font-medium`}>
+                                            <span className={
+                                                tx.type === 'Deposit' || tx.type === 'Sell' || (tx.type === 'Adjustment' && tx.amount > 0)
+                                                    ? 'text-green-600'
+                                                    : 'text-red-600'
+                                            }>
+                                                {tx.amount > 0 ? '+' : ''}{formatCurrency(tx.amount)}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleDeleteTransaction(tx.id)}
+                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))

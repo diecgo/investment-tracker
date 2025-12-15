@@ -35,6 +35,7 @@ interface StoreState {
     deleteSimulation: (id: string) => Promise<void>;
     deleteRealInvestment: (id: string) => Promise<void>;
     deleteSellTransaction: (transactionId: string) => Promise<void>;
+    deleteTransaction: (transactionId: string) => Promise<void>;
     recalculateCapital: () => Promise<void>;
 
     // Helpers
@@ -404,6 +405,16 @@ export const useStore = create<StoreState>((set, get) => ({
             console.error("Error deleting transaction (undo sell):", error);
         }
 
+        get().fetchAllData();
+        get().fetchAllData();
+    },
+
+    deleteTransaction: async (transactionId: string) => {
+        const { error } = await supabase.from('transactions').delete().eq('id', transactionId);
+        if (error) {
+            console.error("Error deleting transaction:", error);
+            return;
+        }
         get().fetchAllData();
     },
 
