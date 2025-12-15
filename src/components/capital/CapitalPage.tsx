@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStore } from "@/store/useStore";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Minus, Wallet } from "lucide-react";
+import { Plus, Minus, Wallet, RefreshCw } from "lucide-react";
 
 export default function CapitalPage() {
-    const { capital, transactions, addCapital, withdrawCapital } = useStore();
+    const { capital, transactions, addCapital, withdrawCapital, recalculateCapital } = useStore();
     const [isDepositOpen, setIsDepositOpen] = useState(false);
     const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+    const [isRecalculating, setIsRecalculating] = useState(false);
 
     // Capital history = transactions of type Deposit or Withdraw
     const capitalHistory = transactions.filter(t => t.type === 'Deposit' || t.type === 'Withdraw');
@@ -44,6 +45,18 @@ export default function CapitalPage() {
                         </Button>
                         <Button onClick={() => setIsWithdrawOpen(true)} variant="destructive">
                             <Minus className="mr-2 h-4 w-4" /> Retirar Fondos
+                        </Button>
+                        <Button
+                            onClick={async () => {
+                                setIsRecalculating(true);
+                                await recalculateCapital();
+                                setIsRecalculating(false);
+                            }}
+                            variant="outline"
+                            disabled={isRecalculating}
+                            title="Recalcular capital desde transacciones"
+                        >
+                            <RefreshCw className={`mr-2 h-4 w-4 ${isRecalculating ? 'animate-spin' : ''}`} /> Recalcular
                         </Button>
                     </div>
                 </Card>

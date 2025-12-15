@@ -35,6 +35,7 @@ interface StoreState {
     deleteSimulation: (id: string) => Promise<void>;
     deleteRealInvestment: (id: string) => Promise<void>;
     deleteSellTransaction: (transactionId: string) => Promise<void>;
+    recalculateCapital: () => Promise<void>;
 
     // Helpers
     getSummary: () => {
@@ -427,5 +428,53 @@ export const useStore = create<StoreState>((set, get) => ({
             unrealizedPL,
             availableCapital: state.capital
         };
+    },
+
+    recalculateCapital: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const transactions = get().transactions;
+
+        // Calculate capital from scratch: Deposits - Withdrawals - Buys + Sells
+        let calculatedCapital = 0;
+
+        transactions.forEach(t => {
+            switch (t.type) {
+                case 'Deposit':
+                    calculatedCapital += t.amount;
+                    break;
+                case 'Withdraw':
+                    calculatedCapital -= t.amount;
+                    break;
+                case 'Buy':
+                    calculatedCapital -= t.amount;
+                    break;
+                case 'Sell':
+                    calculatedCapital += t.amount;
+                    break;
+            }
+        });
+
+        const breakdown = transactions.reduce((acc, t) => {
+            acc[t.type] = (acc[t.type] || 0) + t.amount;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const msg = `Recálculo completado:
+        - Depósitos: ${breakdown['Deposit']?.toFixed(2) || 0} €
+        - Retiradas: ${breakdown['Withdraw']?.toFixed(2) || 0} €
+        - Compras: ${breakdown['Buy']?.toFixed(2) || 0} €
+        - Ventas: ${breakdown['Sell']?.toFixed(2) || 0} €
+        
+        capital Calculado: ${calculatedCapital.toFixed(2)} €`;
+
+        alert(msg);
+
+        // Update in DB
+        await supabase.from('profiles').update({ capital: calculatedCapital }).eq('id', user.id);
+
+        // Refresh
+        get().fetchAllData();
     }
 }));
