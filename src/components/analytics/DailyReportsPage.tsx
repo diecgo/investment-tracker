@@ -238,17 +238,53 @@ function ReportDetailModal({ report, isOpen, onClose }: { report: DailyReport, i
                 {/* Summary Header */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
-                        <span className="text-sm text-slate-500 block mb-1">Valor Total</span>
+                        <span className="text-sm text-slate-500 block mb-1">Valor Total (Cartera)</span>
                         <span className="text-xl font-bold text-slate-900">{formatCurrency(report.currentValue || 0)}</span>
                         <div className={`text-sm mt-1 font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                             {isPositive ? '+' : ''}{plPercent.toFixed(2)}% ({formatCurrency(pl)})
                         </div>
                     </div>
                     <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
-                        <span className="text-sm text-slate-500 block mb-1">Total Invertido</span>
+                        <span className="text-sm text-slate-500 block mb-1">Total Invertido (Activo)</span>
                         <span className="text-xl font-bold text-slate-700">{formatCurrency(report.totalInvested || 0)}</span>
                     </div>
                 </div>
+
+                {/* Realized Profit (Closed Positions Today) */}
+                {(() => {
+                    const sells = ops.filter(o => o.type === 'Sell');
+                    if (sells.length === 0) return null;
+
+                    const totalSoldAmount = sells.reduce((sum, s) => sum + s.amount, 0);
+                    // If profit is recorded (new feature), use it. otherwise approx 0
+                    const totalRealizedProfit = sells.reduce((sum, s) => sum + (s.profit || 0), 0);
+                    const totalCostBasisSold = totalSoldAmount - totalRealizedProfit;
+                    const realizedRoi = totalCostBasisSold > 0 ? (totalRealizedProfit / totalCostBasisSold) * 100 : 0;
+                    const isRealizedPos = totalRealizedProfit >= 0;
+
+                    return (
+                        <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                            <h4 className="text-sm font-semibold text-blue-800 mb-2">Beneficio Cerrado (Hoy)</h4>
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <span className="text-xs text-blue-600 block">Total Venta</span>
+                                    <span className="font-bold text-slate-800">{formatCurrency(totalSoldAmount)}</span>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-blue-600 block">Inversión (Coste)</span>
+                                    <span className="font-bold text-slate-800">{formatCurrency(totalCostBasisSold)}</span>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-blue-600 block">Resultado</span>
+                                    <span className={`font-bold ${isRealizedPos ? 'text-green-600' : 'text-red-600'}`}>
+                                        {isRealizedPos ? '+' : ''}{formatCurrency(totalRealizedProfit)} <br />
+                                        <span className="text-xs">({realizedRoi.toFixed(2)}%)</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {/* Top Movers */}
                 {(winners.length > 0 || losers.length > 0) && (

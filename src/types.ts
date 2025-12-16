@@ -32,6 +32,7 @@ export interface Transaction {
     pricePerUnit?: number; // For Buy/Sell
     quantity?: number; // For Buy/Sell
     description?: string;
+    profit?: number; // Realized Profit (Sell only)
 }
 
 export interface PortfolioSummary {

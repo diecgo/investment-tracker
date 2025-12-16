@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useStore } from "@/store/useStore";
 import { formatCurrency } from "@/lib/utils";
 import { Download, Trash2, Search } from "lucide-react";
@@ -83,14 +83,24 @@ export default function ReportsPage() {
     // Calculate Realized P/L for each transaction
     const realizedOperations = sellTransactions.map(t => {
         const investment = investments.find(i => i.id === t.investmentId);
-        // Fallback or find investment snapshot if possible. 
-        // Note: 'investment' might have updated quantity=0 now, but 'buyPrice' is usually preserved as avg price.
-        const buyPrice = investment ? investment.buyPrice : 0;
+
+        let profit = 0;
+        let costBasis = 0;
         const sellPrice = t.pricePerUnit || 0;
         const qty = t.quantity || 0;
-        const costBasis = qty * buyPrice;
         const saleValue = t.amount;
-        const profit = saleValue - costBasis;
+
+        // Use stored profit if available (New Feature)
+        if (t.profit !== undefined && t.profit !== null) {
+            profit = t.profit;
+            costBasis = saleValue - profit;
+        } else {
+            // Fallback for old data: Estimate using current AVG buy price
+            const buyPrice = investment ? investment.buyPrice : 0;
+            costBasis = qty * buyPrice;
+            profit = saleValue - costBasis;
+        }
+
         const profitPercent = costBasis > 0 ? (profit / costBasis) * 100 : 0;
 
         return {
@@ -99,7 +109,7 @@ export default function ReportsPage() {
             symbol: investment?.symbol || 'Unknown',
             type: investment?.type || 'Unknown',
             quantity: qty,
-            buyPrice: buyPrice,
+            buyPrice: costBasis / (qty || 1), // Derived buy price
             sellPrice: sellPrice,
             costBasis: costBasis,
             saleValue: saleValue,
@@ -109,6 +119,8 @@ export default function ReportsPage() {
     });
 
     const totalRealizedProfit = realizedOperations.reduce((sum, op) => sum + op.profit, 0);
+    const totalRealizedCost = realizedOperations.reduce((sum, op) => sum + op.costBasis, 0);
+    const totalRealizedProfitPercent = totalRealizedCost > 0 ? (totalRealizedProfit / totalRealizedCost) * 100 : 0;
 
 
     const handleExportCSV = () => {
@@ -230,7 +242,14 @@ export default function ReportsPage() {
                     <CardContent>
                         <div className={`text-2xl font-bold ${totalRealizedProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {formatCurrency(totalRealizedProfit)}
+                            <span className="text-sm ml-2 font-normal text-muted-foreground">
+                                ({totalRealizedProfitPercent.toFixed(2)}%)
+                            </span>
                         </div>
+                        {/* Optionally show total realized cost */}
+                        {/* <div className="text-xs text-muted-foreground mt-1">
+                            Sobre {formatCurrency(totalRealizedCost)} invertidos
+                        </div> */}
                     </CardContent>
                 </Card>
             </div>
@@ -276,7 +295,18 @@ export default function ReportsPage() {
                                     );
                                 })
                             )}
+
                         </TableBody>
+                        <TableFooter className="bg-slate-50 font-bold border-t">
+                            <TableRow>
+                                <TableCell colSpan={3}>TOTAL</TableCell>
+                                <TableCell className="text-right">{formatCurrency(totalInvestedActive)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(totalCurrentValueActive)}</TableCell>
+                                <TableCell className={`text-right ${totalUnrealizedProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {formatCurrency(totalUnrealizedProfit)} ({totalUnrealizedProfitPercent.toFixed(2)}%)
+                                </TableCell>
+                            </TableRow>
+                        </TableFooter>
                     </Table>
                 </div>
             </div>
@@ -338,9 +368,22 @@ export default function ReportsPage() {
                                 })
                             )}
                         </TableBody>
+                        <TableFooter className="bg-slate-50 font-bold border-t">
+                            <TableRow>
+                                <TableCell colSpan={5}>TOTAL</TableCell>
+                                <TableCell className="text-right">
+                                    {formatCurrency(realizedOperations.reduce((sum, op) => sum + op.saleValue, 0))}
+                                </TableCell>
+                                <TableCell className={`text-right ${totalRealizedProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {formatCurrency(totalRealizedProfit)} ({totalRealizedProfitPercent.toFixed(2)}%)
+                                </TableCell>
+                                <TableCell></TableCell>
+                            </TableRow>
+                        </TableFooter>
                     </Table>
                 </div>
             </div>
         </div>
+
     );
 }

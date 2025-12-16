@@ -286,6 +286,11 @@ export const useStore = create<StoreState>((set, get) => ({
 
         const saleValue = sellPrice * quantity;
 
+        // Calculate Realized Profit
+        // Profit = (Sell Price - Buy Price) * Quantity
+        const buyPrice = investment.buyPrice || 0;
+        const profit = (sellPrice - buyPrice) * quantity;
+
         // 1. Log Transaction
         await supabase.from('transactions').insert({
             user_id: user.id,
@@ -295,7 +300,8 @@ export const useStore = create<StoreState>((set, get) => ({
             investment_id: id,
             price_per_unit: sellPrice,
             quantity: quantity,
-            description: `Sell ${investment.symbol}`
+            description: `Sell ${investment.symbol}`,
+            profit: profit
         });
 
         // 2. Update Investment Status/Quantity
