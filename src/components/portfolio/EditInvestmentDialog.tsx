@@ -48,8 +48,27 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
             setTotalInvested(investment.totalInvested.toString());
             setPurchaseDate(investment.purchaseDate);
             setNotes(investment.notes || "");
-            // We don't save exchange rate history, so default "false" or assume EUR.
-            setIsForeignCurrency(false);
+
+            // Initialize Currency Mode
+            if (investment.currency === 'USD') {
+                setIsForeignCurrency(true);
+                // If we have original buy price, use it for the display input
+                if (investment.buyPriceOriginal) {
+                    setBuyPrice(investment.buyPriceOriginal.toString());
+                } else {
+                    // Fallback: estimate from EUR price? No, keep EUR if original missing
+                    // Or keep buyPrice as is (EUR) but user toggled USD? 
+                    // Better to just show what we have.
+                    // If we have no original, maybe we shouldn't force USD mode unless explicitly set.
+                }
+
+                if (investment.exchangeRateOpening) {
+                    setExchangeRate(investment.exchangeRateOpening.toString());
+                }
+            } else {
+                setIsForeignCurrency(false);
+                setBuyPrice(investment.buyPrice.toString());
+            }
         }
     }, [investment, isOpen]);
 
@@ -73,6 +92,8 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
         } else {
             if (qty && price && !isNaN(qty) && !isNaN(price)) {
                 const calculatedTotal = qty * price * rate;
+                // If updating Total, we don't want to fight with the initialization.
+                // But this runs on every change. 
                 if (Math.abs(calculatedTotal - total) > 0.01) {
                     setTotalInvested(calculatedTotal.toString());
                 }
@@ -97,6 +118,9 @@ export function EditInvestmentDialog({ isOpen, onClose, investment }: EditInvest
             totalInvested: finalTotalInvestedEUR,
             purchaseDate,
             notes,
+            currency: isForeignCurrency ? 'USD' : 'EUR',
+            buyPriceOriginal: isForeignCurrency ? Number(buyPrice) : undefined,
+            exchangeRateOpening: isForeignCurrency ? Number(exchangeRate) : undefined
         });
 
         onClose();

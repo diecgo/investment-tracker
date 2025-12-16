@@ -275,7 +275,16 @@ export function InvestmentTable() {
                                             {new Date(inv.purchaseDate).toLocaleDateString('es-ES')}
                                         </TableCell>
                                         <TableCell className="text-right">{Number(inv.quantity).toLocaleString('es-ES', { maximumFractionDigits: 6 })}</TableCell>
-                                        <TableCell className="text-right">{formatCurrency(inv.buyPrice)}</TableCell>
+                                        <TableCell className="text-right">
+                                            {inv.currency === 'USD' && inv.buyPriceOriginal ? (
+                                                <div className="flex flex-col items-end">
+                                                    <span>{inv.buyPriceOriginal.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                                    <span className="text-xs text-muted-foreground">({inv.exchangeRateOpening?.toFixed(4)})</span>
+                                                </div>
+                                            ) : (
+                                                formatCurrency(inv.buyPrice)
+                                            )}
+                                        </TableCell>
                                         <TableCell className="text-right">{formatCurrency(inv.totalInvested)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end space-x-1">
@@ -285,29 +294,49 @@ export function InvestmentTable() {
                                                 {priceUpdateStatus[inv.symbol] === 'error' && (
                                                     <X className="h-4 w-4 text-red-500" />
                                                 )}
-                                                <Input
-                                                    key={`price-${inv.id}-${inv.currentPrice}`}
-                                                    type="number"
-                                                    step="any"
-                                                    className="h-8 w-20 text-right"
-                                                    defaultValue={inv.currentPrice ?? ""}
-                                                    placeholder={inv.buyPrice.toString()}
-                                                    onBlur={(e) => {
-                                                        const val = parseFloat(e.target.value);
-                                                        if (!isNaN(val)) {
-                                                            updateCurrentPrice(inv.id, val);
+                                                <div className="flex flex-col items-end">
+                                                    <Input
+                                                        key={`price-${inv.id}-${inv.currentPrice}`}
+                                                        type="number"
+                                                        step="any"
+                                                        className="h-8 w-24 text-right"
+                                                        defaultValue={
+                                                            inv.currency === 'USD' && inv.exchangeRateCurrent && inv.currentPrice
+                                                                ? (inv.currentPrice / inv.exchangeRateCurrent).toFixed(2)
+                                                                : (inv.currentPrice ?? "")
                                                         }
-                                                    }}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            const val = parseFloat((e.target as HTMLInputElement).value);
+                                                        placeholder={
+                                                            inv.currency === 'USD' && inv.buyPriceOriginal
+                                                                ? inv.buyPriceOriginal.toString()
+                                                                : inv.buyPrice.toString()
+                                                        }
+                                                        onBlur={(e) => {
+                                                            const val = parseFloat(e.target.value);
                                                             if (!isNaN(val)) {
-                                                                updateCurrentPrice(inv.id, val);
-                                                                (e.target as HTMLElement).blur();
+                                                                // Convert to EUR if USD
+                                                                const priceToSave = (inv.currency === 'USD' && inv.exchangeRateCurrent)
+                                                                    ? val * inv.exchangeRateCurrent
+                                                                    : val;
+                                                                updateCurrentPrice(inv.id, priceToSave);
                                                             }
-                                                        }
-                                                    }}
-                                                />
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const val = parseFloat((e.target as HTMLInputElement).value);
+                                                                if (!isNaN(val)) {
+                                                                    const priceToSave = (inv.currency === 'USD' && inv.exchangeRateCurrent)
+                                                                        ? val * inv.exchangeRateCurrent
+                                                                        : val;
+                                                                    updateCurrentPrice(inv.id, priceToSave);
+                                                                    (e.target as HTMLElement).blur();
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    {inv.currency === 'USD' && (
+                                                        <span className="text-[10px] text-muted-foreground">USD @ {inv.exchangeRateCurrent}</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right font-medium">{formatCurrency(currentValue)}</TableCell>

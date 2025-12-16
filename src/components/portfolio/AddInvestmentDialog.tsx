@@ -90,7 +90,11 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
             totalInvested: finalTotalInvestedEUR,
             purchaseDate,
             status: isSimulation ? 'Simulation' : 'Active',
-            notes: notes
+            notes: notes,
+            currency: isForeignCurrency ? 'USD' : 'EUR',
+            buyPriceOriginal: isForeignCurrency ? Number(buyPrice) : undefined,
+            exchangeRateOpening: isForeignCurrency ? Number(exchangeRate) : undefined,
+            exchangeRateCurrent: isForeignCurrency ? Number(exchangeRate) : undefined
         });
 
         // Reset and close

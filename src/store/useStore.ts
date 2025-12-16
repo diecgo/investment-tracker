@@ -88,7 +88,13 @@ export const useStore = create<StoreState>((set, get) => ({
                 totalInvested: Number(i.total_invested),
                 purchaseDate: i.purchase_date,
                 status: i.status,
-                notes: i.notes
+                notes: i.notes,
+
+                // Multi-Currency Mapping
+                currency: i.currency || 'EUR',
+                buyPriceOriginal: i.buy_price_original ? Number(i.buy_price_original) : undefined,
+                exchangeRateOpening: i.exchange_rate_opening ? Number(i.exchange_rate_opening) : undefined,
+                exchangeRateCurrent: i.exchange_rate_current ? Number(i.exchange_rate_current) : undefined
             }));
 
             const transactions = (transactionsRes.data || []).map((t: any) => ({
@@ -180,7 +186,11 @@ export const useStore = create<StoreState>((set, get) => ({
             total_invested: invData.totalInvested,
             purchase_date: invData.purchaseDate,
             status: isSimulation ? 'Simulation' : 'Active', // Allow setting Simulation
-            notes: invData.notes
+            notes: invData.notes,
+            currency: invData.currency || 'EUR',
+            buy_price_original: invData.buyPriceOriginal,
+            exchange_rate_opening: invData.exchangeRateOpening,
+            exchange_rate_current: invData.exchangeRateCurrent
         }).select().single();
 
         if (error) { console.error(error); return; }

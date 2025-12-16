@@ -40,15 +40,14 @@ const CRYPTO_MAP: Record<string, string> = {
  */
 async function fetchStockPrice(symbol: string, retries: number = 2): Promise<PriceResult> {
     try {
-        // Yahoo Finance API endpoint
-        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+        // Yahoo Finance v7 Quote API
+        const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`;
 
-        // Use a public CORS proxy (allorigins.win is reliable and free)
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+        // Use api.allorigins.win/raw (More reliable than corsproxy.io in some regions)
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
 
         const response = await fetch(proxyUrl);
 
-        // Handle rate limiting with retry
         if (response.status === 429 && retries > 0) {
             console.log(`Rate limited for ${symbol}, retrying in 1s...`);
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -59,33 +58,25 @@ async function fetchStockPrice(symbol: string, retries: number = 2): Promise<Pri
             throw new Error(`HTTP ${response.status}`);
         }
 
-        const proxyData = await response.json();
-
-        // The actual data is in proxyData.contents as a string
-        if (!proxyData.contents) {
-            throw new Error('No data from proxy');
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            throw new Error('Invalid JSON response from proxy');
         }
 
-        // Check if proxy returned an error from Yahoo
-        if (proxyData.contents.includes('Too Many Requests') && retries > 0) {
-            console.log(`Yahoo rate limited for ${symbol}, retrying in 1s...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return fetchStockPrice(symbol, retries - 1);
-        }
+        const result = data.quoteResponse?.result?.[0];
 
-        const data = JSON.parse(proxyData.contents);
-
-        if (data.chart?.error) {
-            throw new Error(data.chart.error.description || 'Symbol not found');
-        }
-
-        const result = data.chart?.result?.[0];
         if (!result) {
-            throw new Error('No data returned for ' + symbol);
+            if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return fetchStockPrice(symbol, retries - 1);
+            }
+            throw new Error('Symbol not found in Yahoo Finance');
         }
 
-        const price = result.meta?.regularMarketPrice;
-        const currency = result.meta?.currency || 'EUR';
+        const price = result.regularMarketPrice;
+        const currency = result.currency || 'EUR';
 
         if (price === undefined || price === null) {
             throw new Error('Price not available');
@@ -99,6 +90,12 @@ async function fetchStockPrice(symbol: string, retries: number = 2): Promise<Pri
             currency
         };
     } catch (error: any) {
+        // Fallback to the old method (Chart API via allorigins get)
+        if (retries > 0 && !error.message.includes('Fallback')) {
+            console.log(`Primary method failed for ${symbol} (${error.message}), trying fallback...`);
+            return fetchStockPriceFallback(symbol, retries - 1);
+        }
+
         console.error(`✗ ${symbol}:`, error.message);
         return {
             symbol,
@@ -106,6 +103,36 @@ async function fetchStockPrice(symbol: string, retries: number = 2): Promise<Pri
             currency: 'EUR',
             error: error.message || 'Failed to fetch price'
         };
+    }
+}
+
+/**
+ * Fallback method using allorigins.win and chart API (Old method)
+ */
+async function fetchStockPriceFallback(symbol: string, _retries: number = 1): Promise<PriceResult> {
+    try {
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const proxyData = await response.json();
+        if (!proxyData.contents) throw new Error('No data from proxy');
+
+        const data = JSON.parse(proxyData.contents);
+        const result = data.chart?.result?.[0];
+
+        if (!result) throw new Error('Symbol not found');
+
+        const price = result.meta?.regularMarketPrice;
+        const currency = result.meta?.currency || 'EUR';
+
+        if (price === null || price === undefined) throw new Error('Price not available');
+
+        return { symbol, price: Number(price), currency };
+    } catch (error: any) {
+        throw new Error(`Fallback failed: ${error.message}`);
     }
 }
 

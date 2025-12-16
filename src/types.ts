@@ -7,12 +7,18 @@ export interface Investment {
     name: string;
     type: InvestmentType;
     quantity: number;
-    buyPrice: number; // Price per unit at purchase
-    currentPrice: number | null; // Manually updated current price
-    totalInvested: number; // quantity * buyPrice (or manual input if rounding needed)
+    buyPrice: number; // Price per unit at purchase (EUR)
+    currentPrice: number | null; // Manually updated current price (EUR)
+    totalInvested: number; // quantity * buyPrice (EUR)
     purchaseDate: string; // ISO date
     status: InvestmentStatus;
     notes?: string;
+
+    // Multi-Currency Support
+    currency: string; // 'EUR', 'USD', etc.
+    buyPriceOriginal?: number; // Price in original currency
+    exchangeRateOpening?: number; // Rate at purchase
+    exchangeRateCurrent?: number; // Rate now
 }
 
 export type TransactionType = 'Buy' | 'Sell' | 'Deposit' | 'Withdraw' | 'Adjustment';
