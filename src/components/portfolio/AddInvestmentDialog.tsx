@@ -74,12 +74,45 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
         if (!symbol || !quantity || !buyPrice) return;
 
         const rate = isForeignCurrency ? Number(exchangeRate) : 1;
-        // The stored buyPrice should be in EUR per unit
-        // BuyPrice (EUR) = BuyPrice (Original) * Rate
         const finalBuyPriceEUR = Number(buyPrice) * rate;
-
-        // Total Invested is already in EUR (if inputMode=capital) or calculated in EUR (if inputMode=standard)
         const finalTotalInvestedEUR = Number(totalInvested) || (Number(quantity) * finalBuyPriceEUR);
+
+        // Check for existing investment
+        const existingInvestment = investments.find(
+            i => i.symbol === symbol.toUpperCase() && i.status === 'Active' && !isSimulation
+        );
+
+        if (existingInvestment && !isSimulation) {
+            // Confirm with user (Implicitly just do it if they confirm? Or UI prompt?
+            // To be faster, let's use a browser `confirm` dialog for now, 
+            // OR better: we can add a checkbox "Añadir a posición existente" if detected.
+            // Let's assume for this iter that we default to NEW row unless we ask.
+            // Actually, the user asked "que se pudiera añadir".
+            // Let's use window.confirm for simplicity to avoid complex UI state for now.
+            const shouldMerge = window.confirm(
+                `Ya tienes una posición abierta en ${symbol.toUpperCase()}. \n¿Quieres AÑADIR estas acciones a la posición existente (Promediar)?\n\nCancelar para crear una nueva fila separada.`
+            );
+
+            if (shouldMerge) {
+                const addToInvestment = useStore.getState().addToInvestment;
+                addToInvestment(existingInvestment.id, {
+                    symbol: symbol.toUpperCase(),
+                    name: name || symbol.toUpperCase(),
+                    type,
+                    quantity: Number(quantity),
+                    buyPrice: finalBuyPriceEUR,
+                    totalInvested: finalTotalInvestedEUR,
+                    purchaseDate,
+                    status: 'Active',
+                    notes: notes,
+                    currency: isForeignCurrency ? 'USD' : 'EUR',
+                    buyPriceOriginal: isForeignCurrency ? Number(buyPrice) : undefined,
+                    exchangeRateOpening: isForeignCurrency ? Number(exchangeRate) : undefined,
+                });
+                closeAndReset();
+                return;
+            }
+        }
 
         addInvestment({
             symbol: symbol.toUpperCase(),
@@ -97,7 +130,10 @@ export function AddInvestmentDialog({ isOpen, onClose, defaultIsSimulation = fal
             exchangeRateCurrent: isForeignCurrency ? Number(exchangeRate) : undefined
         });
 
-        // Reset and close
+        closeAndReset();
+    };
+
+    const closeAndReset = () => {
         setSymbol("");
         setName("");
         setQuantity("");

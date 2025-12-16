@@ -18,6 +18,11 @@ interface StoreState {
         investment: Omit<Investment, 'id' | 'currentPrice'>
     ) => Promise<void>;
 
+    addToInvestment: (
+        existingId: string,
+        addedData: Omit<Investment, 'id' | 'currentPrice'> & { isSimulation?: boolean }
+    ) => Promise<void>;
+
     sellInvestment: (
         investmentId: string,
         sellPrice: number,
@@ -216,6 +221,58 @@ export const useStore = create<StoreState>((set, get) => ({
         // 3. Deduct Capital
         const currentCapital = get().capital;
         await supabase.from('profiles').update({ capital: currentCapital - cost }).eq('id', user.id);
+
+        get().fetchAllData();
+    },
+
+    addToInvestment: async (existingId, addedData) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const investment = get().investments.find(i => i.id === existingId);
+        if (!investment) return;
+
+        const addedCost = addedData.totalInvested;
+        const addedQty = addedData.quantity;
+
+        // Calculate new weighted averages
+        const newTotalQty = Number(investment.quantity) + Number(addedQty);
+        const newTotalInvested = Number(investment.totalInvested) + Number(addedCost);
+        // New AVG Buy Price (EUR)
+        const newBuyPrice = newTotalInvested / newTotalQty;
+
+        let newBuyPriceOriginal = undefined;
+        if (investment.buyPriceOriginal && addedData.buyPriceOriginal) {
+            const oldTotalOriginal = investment.buyPriceOriginal * investment.quantity;
+            const addedTotalOriginal = addedData.buyPriceOriginal * addedData.quantity;
+            newBuyPriceOriginal = (oldTotalOriginal + addedTotalOriginal) / newTotalQty;
+        }
+
+        // Update Investment
+        await supabase.from('investments').update({
+            quantity: newTotalQty,
+            total_invested: newTotalInvested,
+            buy_price: newBuyPrice,
+            ...(newBuyPriceOriginal ? { buy_price_original: newBuyPriceOriginal } : {})
+        }).eq('id', existingId);
+
+        // Log Transaction (Buy)
+        if (!addedData.isSimulation) {
+            await supabase.from('transactions').insert({
+                user_id: user.id,
+                type: 'Buy',
+                amount: addedCost,
+                date: addedData.purchaseDate,
+                investment_id: existingId,
+                price_per_unit: addedData.buyPrice,
+                quantity: addedQty,
+                description: `Add to ${investment.symbol}`
+            });
+
+            // Deduct Capital
+            const currentCapital = get().capital;
+            await supabase.from('profiles').update({ capital: currentCapital - addedCost }).eq('id', user.id);
+        }
 
         get().fetchAllData();
     },

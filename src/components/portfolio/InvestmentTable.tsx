@@ -31,8 +31,8 @@ export function InvestmentTable() {
     const [editInvestment, setEditInvestment] = useState<Investment | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
-    const [sortBy, setSortBy] = useState<'invested' | 'profit' | 'tae' | 'date'>('date');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [sortBy, setSortBy] = useState<'invested' | 'profit' | 'tae' | 'date' | 'symbol'>('symbol');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [priceUpdateStatus, setPriceUpdateStatus] = useState<Record<string, 'success' | 'error' | null>>({});
 
     // Calculate values for each investment for sorting
@@ -76,18 +76,22 @@ export function InvestmentTable() {
                 case 'date':
                     comparison = new Date(a.purchaseDate).getTime() - new Date(b.purchaseDate).getTime();
                     break;
+                case 'symbol':
+                    comparison = a.symbol.localeCompare(b.symbol);
+                    break;
             }
             return sortOrder === 'desc' ? -comparison : comparison;
         });
         return sorted;
     }, [investmentsWithCalculations, sortBy, sortOrder]);
 
-    const handleSort = (field: 'invested' | 'profit' | 'tae' | 'date') => {
+    const handleSort = (field: 'invested' | 'profit' | 'tae' | 'date' | 'symbol') => {
         if (sortBy === field) {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
         } else {
             setSortBy(field);
-            setSortOrder('desc');
+            // Default desc for numbers, asc for text
+            setSortOrder(field === 'symbol' ? 'asc' : 'desc');
         }
     };
 
@@ -183,7 +187,15 @@ export function InvestmentTable() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Símbolo</TableHead>
+                            <TableHead
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => handleSort('symbol')}
+                            >
+                                <div className="flex items-center gap-1">
+                                    Símbolo
+                                    <ArrowUpDown className="h-3 w-3" />
+                                </div>
+                            </TableHead>
                             <TableHead>Nombre</TableHead>
                             <TableHead>Tipo</TableHead>
                             <TableHead
