@@ -47,6 +47,7 @@ interface StoreState {
         availableCapital: number;
         unrealizedPL: number;
     };
+    recalculatePastReports: () => Promise<void>;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -559,6 +560,82 @@ export const useStore = create<StoreState>((set, get) => ({
             console.error("Error saving daily report:", error);
         } else {
             console.log("Daily report saved for", today);
+        }
+    },
+
+    recalculatePastReports: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch all transactions (Ascending)
+        const { data: allTxs } = await supabase.from('transactions').select('*').order('date', { ascending: true }); // Order by date!
+        // Fetch all investments
+        const { data: allInvs } = await supabase.from('investments').select('*');
+
+        if (!allTxs || !allInvs) return;
+
+        const { data: reports } = await supabase.from('daily_reports').select('*');
+        if (!reports) return;
+
+        let fixedCount = 0;
+
+        for (const report of reports) {
+            if (Number(report.total_invested) === 0) {
+                const reportDate = report.date; // YYYY-MM-DD
+
+                // Filter transactions up to end of that date
+                const relevantTxs = allTxs.filter((t: any) => t.date <= reportDate);
+
+                if (relevantTxs.length === 0) continue;
+
+                // Reconstruct State
+                const qtyMap: Record<string, number> = {};
+                relevantTxs.forEach((t: any) => {
+                    const invId = t.investment_id;
+                    if (!invId) return;
+                    const qty = Number(t.quantity) || 0;
+
+                    if (t.type === 'Buy') {
+                        qtyMap[invId] = (qtyMap[invId] || 0) + qty;
+                    } else if (t.type === 'Sell') {
+                        qtyMap[invId] = (qtyMap[invId] || 0) - qty;
+                    }
+                });
+
+                let newTotalInvested = 0;
+                let newCurrentValue = 0;
+
+                Object.keys(qtyMap).forEach(invId => {
+                    const qty = qtyMap[invId];
+                    const inv = allInvs.find((i: any) => i.id === invId);
+
+                    // Use tolerance for float
+                    if (inv && qty > 0.000001) {
+                        const buyPrice = Number(inv.buy_price) || 0;
+                        const currentPrice = Number(inv.current_price) || buyPrice;
+
+                        newTotalInvested += qty * buyPrice;
+                        newCurrentValue += qty * currentPrice;
+                    }
+                });
+
+                if (newTotalInvested > 0) {
+                    console.log(`Fixing report for ${reportDate}: ${newTotalInvested} EUR`);
+                    await supabase.from('daily_reports').update({
+                        total_invested: newTotalInvested,
+                        current_value: newCurrentValue
+                    }).eq('id', report.id);
+                    fixedCount++;
+                }
+            }
+        }
+
+        if (fixedCount > 0) {
+            alert(`Se han reparado ${fixedCount} informes históricos.`);
+            await get().fetchAllData();
+        } else {
+            console.log("No corrupted reports found.");
+            // alert("El historial parece correcto.");
         }
     }
 }));

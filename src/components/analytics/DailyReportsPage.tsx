@@ -5,13 +5,16 @@ import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { DailyReport, Transaction } from "@/types";
-import { ArrowDownRight, ArrowUpRight, Calendar, ShoppingCart } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Calendar, ShoppingCart, RefreshCw } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import { useStore } from "@/store/useStore";
 
 export function DailyReportsPage() {
     const [reports, setReports] = useState<DailyReport[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedReport, setSelectedReport] = useState<DailyReport | null>(null);
+    const { recalculatePastReports } = useStore();
 
     useEffect(() => {
         fetchReports();
@@ -43,9 +46,18 @@ export function DailyReportsPage() {
 
     return (
         <div className="space-y-6 pb-20 fade-in">
-            <h1 className="text-3xl font-bold text-slate-900">
-                Histórico Diario
-            </h1>
+            <div className="flex items-center justify-between">
+                <h1 className="text-3xl font-bold text-slate-900">
+                    Histórico Diario
+                </h1>
+                <Button variant="outline" onClick={async () => {
+                    await recalculatePastReports();
+                    fetchReports();
+                }}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Reparar Histórico
+                </Button>
+            </div>
 
             {reports.length === 0 ? (
                 <Card className="bg-white border-slate-200">
