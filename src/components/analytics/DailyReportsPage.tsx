@@ -35,7 +35,17 @@ export function DailyReportsPage() {
             console.error("Error fetching reports:", error);
         } else {
             console.log("Reports fetched:", data);
-            setReports(data as DailyReport[]);
+            const mappedReports: DailyReport[] = data.map((r: any) => ({
+                id: r.id,
+                userId: r.user_id,
+                date: r.date,
+                totalInvested: Number(r.total_invested),
+                currentValue: Number(r.current_value),
+                metrics: r.metrics,
+                operations: r.operations,
+                createdAt: r.created_at
+            }));
+            setReports(mappedReports);
         }
         setIsLoading(false);
     };
@@ -231,7 +241,7 @@ function ReportDetailModal({ report, isOpen, onClose }: { report: DailyReport, i
                         <span className="text-sm text-slate-500 block mb-1">Valor Total</span>
                         <span className="text-xl font-bold text-slate-900">{formatCurrency(report.currentValue || 0)}</span>
                         <div className={`text-sm mt-1 font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                            {isPositive ? '+' : ''}{plPercent.toFixed(2)}%
+                            {isPositive ? '+' : ''}{plPercent.toFixed(2)}% ({formatCurrency(pl)})
                         </div>
                     </div>
                     <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
